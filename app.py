@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 from sqlalchemy import create_engine, Column, Integer, String, Float, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -138,6 +138,19 @@ async def delete_item(item_id: int, db: Session = Depends(get_db)):
     db.delete(db_item)
     db.commit()
     return None
+
+
+# Dependency to check Authorization
+def verify_token(authorization: Optional[str] = Header(None)):
+    if authorization != "Bearer secrettoken": # Replace secrettoken with your actual token
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return True
+
+
+@app.get("/secret", tags=["Auth"])
+async def secret_route(authorized: bool = Depends(verify_token)):
+    return {"message": "You are authorized to see this secret!"}
+
 
 
 # Run the application
